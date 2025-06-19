@@ -30,7 +30,7 @@ class Application():
     
     def start_app(self) -> FastAPI:
         @asynccontextmanager
-        async def lifespan(server: FastAPI) -> AsyncGenerator[None, None]:
+        async def lifespan() -> AsyncGenerator[None, None]:
             try:
                 # await db.init_db()
                 yield
@@ -39,5 +39,5 @@ class Application():
                 # await db.close()
 
         server = FastAPI(lifespan=lifespan)
-        self.setup(server=server)
+        self.setup()
         return server
