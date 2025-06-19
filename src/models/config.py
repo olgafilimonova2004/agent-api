@@ -3,7 +3,7 @@ import os
 from pydantic import BaseModel, Field
 
 class DBConfig(BaseModel):
-    DB_URL: str = Field(...)
+    DB_URL: str = Field(default='postgres://postgres:postgres@localhost:5432/postgres')
 
 
 class AppConfig(BaseModel):

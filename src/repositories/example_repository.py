@@ -1,5 +1,9 @@
-from src.common.database.postgres import Postgres
+from src.common.database.postgres import DatabaseSessionManager
 
 
 class ExampleRepository:
-    pass
+    
+    def __init__(self, conn: DatabaseSessionManager):
+        self._session = conn
+    
+    

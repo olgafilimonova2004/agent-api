@@ -3,10 +3,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
+from loguru import logger
 
 from src.models.config import AppConfig
 from src.routers.default import DefaultRouter
-
+from src.common.database.postgres import psql as db
 
 class Application():
     def __init__(
@@ -21,7 +22,7 @@ class Application():
         server.add_middleware(
             CORSMiddleware,
             allow_origins=['*'],
-            allow_credentiald=True,
+            allow_credentials=True,
             allow_methods=['*'],
             allow_headers=['*']
         )
@@ -31,11 +32,12 @@ class Application():
         @asynccontextmanager
         async def lifespan(server: FastAPI) -> AsyncGenerator[None, None]:
             try:
-                await db.connect()
+                # await db.init_db()
                 yield
             finally:
-                await db.disconnect
-        
+                logger.warning('Ending work')
+                # await db.close()
+
         server = FastAPI(lifespan=lifespan)
         self.setup(server=server)
         return server

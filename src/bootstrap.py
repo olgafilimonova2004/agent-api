@@ -1,6 +1,6 @@
 from src.application import Application
 from src.clients.base_client import BaseClient
-from src.common.database.postgres import db
+from src.common.database.postgres import psql as db
 from src.models.config import AppConfig
 from src.repositories.example_repository import ExampleRepository
 from src.routers.default import DefaultRouter

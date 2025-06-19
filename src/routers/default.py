@@ -2,15 +2,7 @@ from http import HTTPStatus
 
 from fastapi import APIRouter, Response
 
-from src.common.database.postgres import db
-from src.interfaces.router import BaseRouter
-from src.services.example import ExampleService
-
-from http import HTTPStatus
-
-from fastapi import APIRouter, Response
-
-from src.common.database.postgres import db
+from src.common.database.postgres import psql as db
 from src.interfaces.router import BaseRouter
 from src.services.example import ExampleService
 
