@@ -30,14 +30,14 @@ class Application():
     
     def start_app(self) -> FastAPI:
         @asynccontextmanager
-        async def lifespan() -> AsyncGenerator[None, None]:
+        async def lifespan(server: FastAPI) -> AsyncGenerator[None, None]:
             try:
                 # await db.init_db()
                 yield
             finally:
-                logger.warning('Ending work')
+                logger.warning('Ending ')
                 # await db.close()
 
         server = FastAPI(lifespan=lifespan)
-        self.setup()
+        self.setup(server=server)
         return server
