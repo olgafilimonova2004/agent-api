@@ -35,7 +35,7 @@ class Application():
                 # await db.init_db()
                 yield
             finally:
-                logger.warning('Ending work')
+                logger.warning('Ending ')
                 # await db.close()
 
         server = FastAPI(lifespan=lifespan)
