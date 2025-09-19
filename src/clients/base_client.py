@@ -11,13 +11,17 @@ class BaseClient(IBaseClient):
         self,
         base_url: str,
         token: str | None = None,
+        username: str | None = None,
+        password: str | None = None,
         session: AsyncClient | None = None,
         headers: dict | None = None,
         params: dict | None = None,
     ):
         self.base_url = base_url
         self.token = token
-        self.session = session or AsyncClient()
+        self.username = username
+        self.password = password
+        self.session = session or AsyncClient(timeout=30.0)
         self.headers = headers
         self.params = params or {}
 
@@ -37,22 +41,52 @@ class BaseClient(IBaseClient):
             headers=headers,
         )
 
-    async def patch(self, url: str, json: dict, **kwargs: Any) -> Response:
-        return await self.session.patch(url=url, json=json, **kwargs)
+    async def patch(
+        self,
+        url: str,
+        json: dict | None = None,
+        data: dict | None = None,
+        files: dict | list | None = None,
+        **kwargs: Any,
+    ) -> Response:
+        url = self.build_path(self.base_url + url)
+        return await self.session.patch(
+            url=url, json=json, data=data, files=files, **kwargs
+        )
 
-    async def put(self, url: str, json: dict, **kwargs: Any) -> Response:
-        return await self.session.patch(url=url, json=json, **kwargs)
+    async def put(
+        self,
+        url: str,
+        json: dict | None = None,
+        data: dict | None = None,
+        files: dict | list | None = None,
+        **kwargs: Any,
+    ) -> Response:
+        url = self.build_path(self.base_url + url)
+        return await self.session.put(
+            url=url, json=json, data=data, files=files, **kwargs
+        )
 
     async def get(self, url: str, **kwargs: Any) -> Response:
         url = self.build_path(self.base_url + url)
-
         return await self.session.get(url=url, **kwargs)
 
-    async def post(self, url: str, json: dict, **kwargs: Any) -> Response:
-        return await self.session.post(url=url, json=json, **kwargs)
+    async def post(
+        self,
+        url: str,
+        json: dict | None = None,
+        data: dict | None = None,
+        files: dict | list | None = None,
+        **kwargs: Any,
+    ) -> Response:
+        url = self.build_path(self.base_url + url)
+        return await self.session.post(
+            url=url, json=json, data=data, files=files, **kwargs
+        )
 
     async def delete(self, url: str, **kwargs: Any) -> Response:
-        return await self.session.delete(url, **kwargs)
+        url = self.build_path(self.base_url + url)
+        return await self.session.delete(url=url, **kwargs)
 
     async def close(self) -> None:
         await self.session.aclose()
