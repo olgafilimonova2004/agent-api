@@ -1,69 +1,56 @@
-from collections.abc import AsyncGenerator
-from asyncio import current_task
+import asyncio
 
-from sqlalchemy.ext.asyncio import (
-    async_sessionmaker,
-    create_async_engine,
-    AsyncSession,
-    AsyncEngine,
-    async_scoped_session
-)
-
-import loguru
-
-from src.common.config import app_config
+import asyncpg
+from asyncpg.pool import Pool
+from loguru import logger
 
 
-class DatabaseSessionManager:
-    """
-    Класс отвечающий за создание/удаление сессии и инициализацию базы данных
-    """
-    def __init__(self, db_url: str):
-        self.engine: AsyncEngine | None = None
-        self.session_marker = None
-        self.session = None
-        self._url = db_url
+class Postgres:
+    MAX_CONNECT_ATTEMPTS = 5
+    CONNECTION_TIMEOUT = 30
+    MIN_POOL_SIZE = 1
+    MAX_POOL_SIZE = 10
 
-    def init_db(self):
-        if self.engine is not None:
-            raise Exception('Database already initialized')
+    def __init__(self, dsn: str):
+        self.dsn = dsn
+        self._pool: Pool | None = None
 
-        self.engine = create_async_engine(
-            url=f'postgresql+asyncpg://{self._url}',
-            pool_size=100, max_overflow=100, pool_pre_ping=True,
-        )
+    @property
+    def pool(self) -> Pool:
+        if not self._pool:
+            raise RuntimeError("Connect to db first")
 
-        self.session_marker = async_sessionmaker(
-            autocommit=False, autoflush=False, bind=self.engine
-        )
+        return self._pool
 
-        self.session = async_scoped_session(
-            self.session_marker, scopefunc=current_task
-        )
-        loguru.logger.success('Database initialized')
+    async def connect(self) -> Pool:
+        if self._pool:
+            return self._pool
 
-    async def close(self):
-        if self.engine is None:
-            raise Exception('DatabaseSessionManager has not been initialized')
-        await self.session.remove()
-        await self.engine.dispose()
+        attempt = 0
 
+        while attempt < self.MAX_CONNECT_ATTEMPTS:
+            try:
+                self._pool = await asyncpg.create_pool(
+                    self.dsn,
+                    min_size=self.MIN_POOL_SIZE,
+                    max_size=self.MAX_POOL_SIZE,
+                    command_timeout=self.CONNECTION_TIMEOUT,
+                )
+                logger.info("Successfully connected to database")
+                return self._pool  # noqa: TRY300
+            except Exception as e:
+                logger.error(
+                    f"Failed to connect to db (attempt {attempt + 1}/{self.MAX_CONNECT_ATTEMPTS}): {str(e)}"
+                )
+                attempt += 1
+                await asyncio.sleep(2**attempt)
 
-psql = DatabaseSessionManager(app_config.db_config.DB_URL)
+        raise ConnectionError("Could not connect to db")  # noqa: EM101, TRY003
 
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Функция get_db возвращает асинхронный генератор.
-    Этот генератор можно использовать для получения объектов типа AsyncSession.
-    """
-    session = psql.session()
-    if session is None:
-        raise Exception('DatabaseSessionManager has not been initialized')
-    try:
-        yield session
-    except Exception:
-        await session.rollback()
-        raise
-    finally:
-        await session.close()
+    async def disconnect(self) -> None:
+        if self._pool:
+            try:
+                await self._pool.close()
+                self._pool = None
+            except Exception as e:
+                logger.error(f"Error closing database connection: {str(e)}")
