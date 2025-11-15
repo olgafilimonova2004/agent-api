@@ -121,7 +121,7 @@ ehthumbs.db
 
 # SQLite database files
 *.db
-pgdata
+./pgdata
 # Pyre type checker
 .pyre/
 
