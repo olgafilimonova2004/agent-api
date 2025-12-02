@@ -154,11 +154,3 @@ docker run -p 8000:8000 --env-file=.env api-gateway
 
 Проект настроен для использования **pytest** с поддержкой асинхронных тестов.
 
-
-
-<div align="center">
-
-
-> 💡 **Tip:** Don't be sad, let others take care of it :)
-
-</div>
