@@ -1,56 +1,53 @@
+from typing import Union
 import asyncio
 
 import asyncpg
 from asyncpg.pool import Pool
 from loguru import logger
 
+from src.models.config import PostgresConfig
 
-class Postgres:
-    MAX_CONNECT_ATTEMPTS = 5
-    CONNECTION_TIMEOUT = 30
-    MIN_POOL_SIZE = 1
-    MAX_POOL_SIZE = 10
 
-    def __init__(self, dsn: str):
-        self.dsn = dsn
-        self._pool: Pool | None = None
+class PostgresPool:
+    def __init__(self, config: PostgresConfig):
+        self.pool: Union[Pool, None] = None
+        self._config = config
 
-    @property
-    def pool(self) -> Pool:
-        if not self._pool:
-            raise RuntimeError("Connect to db first")
+    async def create_pool(self) -> Pool:
+        connection_attempt = 0
 
-        return self._pool
+        if not self.pool:
+            while connection_attempt < self._config.MAX_CONN_ATTEMPT:
+                try:
+                    self.pool = await asyncpg.create_pool(
+                        dsn=self._config.DSN,
+                        min_size=self._config.MIN_SIZE,
+                        max_size=self._config.MAX_SIZE,
+                    )
+                    logger.success("Successfully connected to database")
+                    return self.pool
 
-    async def connect(self) -> Pool:
-        if self._pool:
-            return self._pool
+                except Exception as e:
+                    connection_attempt += 1
+                    logger.warning(
+                        f"Trying to connect to the database. Connection attempt: {connection_attempt}/{self._config.MAX_CONN_ATTEMPT}. Error: {e}"
+                    )
+                    logger.debug(f"DSN: {self._config.DSN}")
+                    if connection_attempt < self._config.MAX_CONN_ATTEMPT:
+                        await asyncio.sleep(connection_attempt * 2)
 
-        attempt = 0
+            raise asyncpg.exceptions.PostgresConnectionError(
+                f"Failed to connect to database after {self._config.MAX_CONN_ATTEMPT} attempts"
+            )
 
-        while attempt < self.MAX_CONNECT_ATTEMPTS:
+    async def close_pool(self) -> None:
+        if self.pool:
             try:
-                self._pool = await asyncpg.create_pool(
-                    self.dsn,
-                    min_size=self.MIN_POOL_SIZE,
-                    max_size=self.MAX_POOL_SIZE,
-                    command_timeout=self.CONNECTION_TIMEOUT,
-                )
-                logger.info("Successfully connected to database")
-                return self._pool  # noqa: TRY300
+                await self.pool.close()
+                logger.info("Database pool closed successfully")
             except Exception as e:
-                logger.error(
-                    f"Failed to connect to db (attempt {attempt + 1}/{self.MAX_CONNECT_ATTEMPTS}): {str(e)}"
-                )
-                attempt += 1
-                await asyncio.sleep(2**attempt)
-
-        raise ConnectionError("Could not connect to db")  # noqa: EM101, TRY003
-
-    async def disconnect(self) -> None:
-        if self._pool:
-            try:
-                await self._pool.close()
-                self._pool = None
-            except Exception as e:
-                logger.error(f"Error closing database connection: {str(e)}")
+                logger.error(f"Error closing database pool: {e}")
+            finally:
+                self.pool = None
+        else:
+            logger.info("Active pool was closed or not found")

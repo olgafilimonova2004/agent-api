@@ -1,4 +1,4 @@
-from typing import Any, Self
+from typing import Any, Mapping, Self
 from urllib.parse import urljoin
 
 from httpx import AsyncClient, Response
@@ -14,26 +14,26 @@ class BaseClient(IBaseClient):
         username: str | None = None,
         password: str | None = None,
         session: AsyncClient | None = None,
-        headers: dict | None = None,
-        params: dict | None = None,
+        headers: dict[str, str] | None = None,
+        params: dict[str, Any] | None = None,
     ):
-        self.base_url = base_url
+        self.base_url = base_url.rstrip("/")
         self.token = token
         self.username = username
         self.password = password
         self.session = session or AsyncClient(timeout=30.0)
-        self.headers = headers
+        self.headers = headers or {}
         self.params = params or {}
 
     @classmethod
-    def create(cls, **kwargs: Any) -> Self:  # noqa: ANN206
-        headers = kwargs.pop("headers", {})
+    def create(cls, **kwargs: Any) -> Self:
+        headers: dict[str, str] = kwargs.pop("headers", {}) or {}
         token = kwargs.pop("token", None)
         if token:
-            headers.update({"X-Access-Token": token})
-        base_url = kwargs.pop("base_url", None)
-        timeout = kwargs.pop("timeout")
-        session = AsyncClient(timeout=timeout) if timeout else AsyncClient()
+            headers["X-Access-Token"] = token
+        base_url = kwargs.pop("base_url", "")
+        timeout = kwargs.pop("timeout", 30.0)
+        session = AsyncClient(timeout=timeout)
         return cls(
             base_url=base_url,
             token=token,
@@ -41,60 +41,119 @@ class BaseClient(IBaseClient):
             headers=headers,
         )
 
-    async def patch(
+    async def get(
         self,
         url: str,
-        json: dict | None = None,
-        data: dict | None = None,
-        files: dict | list | None = None,
+        *,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
         **kwargs: Any,
     ) -> Response:
-        url = self.build_path(self.base_url + url)
-        return await self.session.patch(
-            url=url, json=json, data=data, files=files, **kwargs
+        full_url = self.build_path(url)
+        return await self.session.get(
+            url=full_url,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+            **kwargs,
+        )
+
+    async def post(
+        self,
+        url: str,
+        *,
+        json: dict[str, Any] | None = None,
+        data: dict[str, Any] | Mapping[str, Any] | None = None,
+        content: bytes | str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        **kwargs: Any,
+    ) -> Response:
+        full_url = self.build_path(url)
+        return await self.session.post(
+            url=full_url,
+            json=json,
+            data=data,
+            content=content,
+            headers=headers,
+            timeout=timeout,
+            **kwargs,
         )
 
     async def put(
         self,
         url: str,
-        json: dict | None = None,
-        data: dict | None = None,
-        files: dict | list | None = None,
+        *,
+        json: dict[str, Any] | None = None,
+        data: dict[str, Any] | Mapping[str, Any] | None = None,
+        content: bytes | str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
         **kwargs: Any,
     ) -> Response:
-        url = self.build_path(self.base_url + url)
+        full_url = self.build_path(url)
         return await self.session.put(
-            url=url, json=json, data=data, files=files, **kwargs
+            url=full_url,
+            json=json,
+            data=data,
+            content=content,
+            headers=headers,
+            timeout=timeout,
+            **kwargs,
         )
 
-    async def get(self, url: str, **kwargs: Any) -> Response:
-        url = self.build_path(self.base_url + url)
-        return await self.session.get(url=url, **kwargs)
-
-    async def post(
+    async def patch(
         self,
         url: str,
-        json: dict | None = None,
-        data: dict | None = None,
-        files: dict | list | None = None,
+        *,
+        json: dict[str, Any] | None = None,
+        data: dict[str, Any] | Mapping[str, Any] | None = None,
+        content: bytes | str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
         **kwargs: Any,
     ) -> Response:
-        url = self.build_path(self.base_url + url)
-        return await self.session.post(
-            url=url, json=json, data=data, files=files, **kwargs
+        full_url = self.build_path(url)
+        return await self.session.patch(
+            url=full_url,
+            json=json,
+            data=data,
+            content=content,
+            headers=headers,
+            timeout=timeout,
+            **kwargs,
         )
 
-    async def delete(self, url: str, **kwargs: Any) -> Response:
-        url = self.build_path(self.base_url + url)
-        return await self.session.delete(url=url, **kwargs)
-
-    async def close(self) -> None:
-        await self.session.aclose()
+    async def delete(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        **kwargs: Any,
+    ) -> Response:
+        full_url = self.build_path(url)
+        return await self.session.delete(
+            url=full_url,
+            params=params,
+            headers=headers,
+            timeout=timeout,
+            **kwargs,
+        )
 
     def build_path(self, path: str) -> str:
-        """Build full URL from base path and relative path"""
-        base = f"{self.base_url}/" if self.base_url[-1].isalpha() else self.base_url
-
-        base = self.base_url if self.base_url.endswith("/") else f"{self.base_url}/"
-        path = path.removeprefix("/")
+        base = f"{self.base_url}/"
+        path = path.lstrip("/")
         return urljoin(base, path)
+
+    async def close(self) -> None:
+        if self.session:
+            await self.session.aclose()
+
+    async def __aenter__(self) -> "BaseClient":
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        await self.close()

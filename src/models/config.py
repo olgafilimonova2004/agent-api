@@ -2,20 +2,23 @@ import os
 
 from pydantic import BaseModel, Field
 
-class DBConfig(BaseModel):
-    DB_URL: str = Field(default='postgres://postgres:postgres@localhost:5432/postgres')
+class PostgresConfig(BaseModel):
+    DSN: str = Field(default="postgres://local:local@db:5432/local")
+    MIN_SIZE: int = Field(default=1)
+    MAX_SIZE: int = Field(default=100)
+    MAX_CONN_ATTEMPT: int = Field(default=5)
 
 
 class AppConfig(BaseModel):
-    db_config: DBConfig
+    postgres_config: PostgresConfig
 
     @classmethod
-    def create(cls):
+    def initialize(cls):
         envs = os.environ
 
-        db_config = DBConfig(**envs)
+        postgres_config = PostgresConfig(**envs)
 
         return AppConfig(
-            db_config=db_config
+            postgres_config=postgres_config
         )
 

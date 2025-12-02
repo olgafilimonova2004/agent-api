@@ -4,40 +4,54 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from loguru import logger
+from dishka import Container
 
 from src.models.config import AppConfig
-from src.routers.default import DefaultRouter
-from src.common.database.postgres import psql as db
+from src.interfaces.router import BaseRouter
+from src.common.database.postgres import PostgresPool
+from src.common.container import setup_di
 
-class Application():
+
+class Application:
     def __init__(
         self,
         config: AppConfig,
-        default: DefaultRouter,
+        routers: list[BaseRouter],
+        container: Container,
     ):
         self._config = config
-        self._default = default
-    
-    def setup(self, server: FastAPI) -> None:
-        server.add_middleware(
+        self.routers = routers
+        self.container = container
+
+    def initialize(self, app: FastAPI) -> None:
+        app.add_middleware(
             CORSMiddleware,
-            allow_origins=['*'],
+            allow_origins=["*"],
             allow_credentials=True,
-            allow_methods=['*'],
-            allow_headers=['*']
+            allow_methods=["*"],
+            allow_headers=["*"],
         )
-        server.include_router(self._default.api_router, prefix=self._default.base_prefix, tags=self._default.tags)
-    
+        for router in self.routers:
+            app.include_router(
+                router.router,
+                prefix=router.prefix,
+                tags=router.tags,
+            )
+
     def start_app(self) -> FastAPI:
         @asynccontextmanager
-        async def lifespan(server: FastAPI) -> AsyncGenerator[None, None]:
+        async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             try:
-                # await db.init_db()
+                db = self.container.get(PostgresPool)
+                await db.create_pool()
                 yield
             finally:
-                logger.warning('Ending ')
-                # await db.close()
+                logger.warning("Ending ")
+                await db.close_pool()
 
-        server = FastAPI(lifespan=lifespan)
-        self.setup(server=server)
-        return server
+        app = FastAPI(lifespan=lifespan)
+
+        setup_di(container=self.container, app=app)
+
+        self.initialize(app=app)
+        return app
