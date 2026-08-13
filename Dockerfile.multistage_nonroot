@@ -1,0 +1,48 @@
+FROM python:3.13-alpine3.24 AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:0.12.3 /uv /uvx /bin/
+
+WORKDIR /build
+
+COPY . .
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+ENV UV_CACHE_DIR=/opt/uv-cache/ \
+    UV_LINK_MODE=copy \
+    UV_PROJECT_ENVIRONMENT=/usr/local \
+    UV_PYTHON_DOWNLOADS=0 UV_NO_MANAGED_PYTHON=1
+
+RUN --mount=type=cache,target=/opt/uv-cache \
+    uv sync --no-dev --locked --no-editable
+
+FROM python:3.13-alpine3.24
+
+ARG USER_UID=1000
+ARG PROJECT_NAME=api-base
+
+# для примера
+RUN apk add --no-cache \
+    ca-certificates 
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+COPY --from=builder /usr/local /usr/local
+
+RUN adduser -H -s /sbin/nologin -u ${USER_UID} -D api
+
+VOLUME [ "/var/lib/${PROJECT_NAME}/", "/var/lib/${PROJECT_NAME}/" ]
+
+RUN for dir in /var/lib/${PROJECT_NAME}/data /var/lib/${PROJECT_NAME}/tmp/; \
+    do mkdir -p $dir; \
+    done
+
+RUN chmod -R 0700 /var/lib/${PROJECT_NAME}/
+COPY blobs/ /var/lib/${PROJECT_NAME}/blobs/
+RUN chown -R api:api /var/lib/${PROJECT_NAME}/
+
+USER api
+
+WORKDIR /var/lib/${PROJECT_NAME}/
+
+ENTRYPOINT ["api-base"]

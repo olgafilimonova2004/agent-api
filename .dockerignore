@@ -138,6 +138,22 @@ __pypackages__/
 pyrightconfig.json
 
 # env files
-.src
 .env
 .env.docker
+
+# Test files
+./test*
+./temp*
+
+# git
+.gitattributes
+.gitignore
+.git
+
+# infra
+.pre-commit-config.yaml
+
+#docker
+[dD]ockerfile*
+docker-compose*
+.dockerignore
