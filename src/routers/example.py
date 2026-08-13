@@ -1,33 +1,20 @@
-from http import HTTPStatus
-
-from fastapi import APIRouter, Response
+from fastapi import APIRouter
 
 from src.common.enums import RoutersMetainfo
-from src.interfaces.router import BaseRouter
+from src.interfaces.router import IBaseRouter
 from src.services.example import ExampleService
 
 
-class ExampleRouter(BaseRouter):
+class ExampleRouter(IBaseRouter):
     def __init__(
         self,
         example_service: ExampleService,
     ):
         self.example_service = example_service
-        self.tags = RoutersMetainfo.DEFAULT_TAGS.value
-        self.prefix = RoutersMetainfo.DEFAULT_PREFIX.value
+        self._tags = RoutersMetainfo.EXAMPLE_TAGS.value
+        self._base_prefix = RoutersMetainfo.DEFAULT_PREFIX.value
 
-    @property
-    def router(self) -> APIRouter:
-        router = APIRouter()
-        self.initialize(router)
-
-        return router
-
-    def initialize(self, router: APIRouter) -> None:
-        @router.get("/ping")
-        async def ping() -> str:
-            return "pong"
-
-        @router.get("/ready")
-        async def ready() -> dict:
-            return {"status": "ok"}
+    def _register(self, router: APIRouter) -> None:
+        @router.get("/")
+        async def get_all():
+            return await self.example_service.get_all()
