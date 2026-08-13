@@ -1,14 +1,15 @@
-from dishka import Scope, Container, Provider, provide, make_container
+from dishka import Container, Provider, Scope, make_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
-from src.interfaces.router import BaseRouter
-from src.models.config import AppConfig
 from src.clients.base_client import BaseClient
 from src.common.database.postgres import PostgresPool
+from src.interfaces.router import IBaseRouter
+from src.models.config import AppConfig
 from src.repositories.example_repository import ExampleRepository
-from src.services.example import ExampleService
 from src.routers.example import ExampleRouter
+from src.routers.health import HealthRouter
+from src.services.example import ExampleService
 
 
 class ConfigProvider(Provider):
@@ -47,10 +48,14 @@ class RouterProvider(Provider):
     @provide(scope=Scope.APP)
     def get_example_router(self, service: ExampleService) -> ExampleRouter:
         return ExampleRouter(example_service=service)
+    
+    @provide(scope=Scope.APP)
+    def get_health_router(self) -> HealthRouter:
+        return HealthRouter()
 
     @provide(scope=Scope.APP)
-    def get_all_routers(self, example_router: ExampleRouter) -> list[BaseRouter]:
-        return [example_router]
+    def get_all_routers(self, example_router: ExampleRouter, health_router: HealthRouter) -> list[IBaseRouter]:
+        return [example_router, health_router]
 
 
 def initialize_container() -> Container:

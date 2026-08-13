@@ -1,0 +1,57 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
+from dishka import Container
+from fastapi import FastAPI
+from loguru import logger
+from starlette.middleware.cors import CORSMiddleware
+
+from src.common.database.postgres import PostgresPool
+from src.entrypoint.container import setup_di
+from src.interfaces.router import IBaseRouter
+from src.models.config import AppConfig
+
+
+class Application:
+    def __init__(
+        self,
+        config: AppConfig,
+        routers: list[IBaseRouter],
+        container: Container,
+    ):
+        self._config = config
+        self.routers = routers
+        self.container = container
+
+    def initialize(self, app: FastAPI) -> None:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        for router in self.routers:
+            app.include_router(
+                router.api_router,
+                prefix=router.base_prefix,
+                tags=router.tags,  # type: ignore
+            )
+
+    def start_app(self) -> FastAPI:
+        @asynccontextmanager
+        async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+            db = self.container.get(PostgresPool)
+            try:
+                await db.create_pool()
+                yield
+            finally:
+                logger.warning("Ending ")
+                await db.close_pool()
+
+        app = FastAPI(lifespan=lifespan)
+
+        setup_di(container=self.container, app=app)
+
+        self.initialize(app=app)
+        return app
