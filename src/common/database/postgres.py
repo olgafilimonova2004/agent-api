@@ -1,4 +1,3 @@
-from typing import Union
 import asyncio
 
 import asyncpg
@@ -10,22 +9,22 @@ from src.models.config import PostgresConfig
 
 class PostgresPool:
     def __init__(self, config: PostgresConfig):
-        self.pool: Union[Pool, None] = None
+        self._pool: Pool | None = None
         self._config = config
 
     async def create_pool(self) -> Pool:
         connection_attempt = 0
 
-        if not self.pool:
+        if not self._pool:
             while connection_attempt < self._config.MAX_CONN_ATTEMPT:
                 try:
-                    self.pool = await asyncpg.create_pool(
+                    self._pool = await asyncpg.create_pool(
                         dsn=self._config.DSN,
                         min_size=self._config.MIN_SIZE,
                         max_size=self._config.MAX_SIZE,
                     )
                     logger.success("Successfully connected to database")
-                    return self.pool
+                    return self._pool
 
                 except Exception as e:
                     connection_attempt += 1
@@ -39,15 +38,23 @@ class PostgresPool:
             raise asyncpg.exceptions.PostgresConnectionError(
                 f"Failed to connect to database after {self._config.MAX_CONN_ATTEMPT} attempts"
             )
+        else:
+            return self._pool
+
+    @property
+    def pool(self) -> Pool:
+        if self._pool is None:
+            raise RuntimeError("Database Pool not inilialized")
+        return self._pool
 
     async def close_pool(self) -> None:
-        if self.pool:
+        if self._pool:
             try:
-                await self.pool.close()
+                await self._pool.close()
                 logger.info("Database pool closed successfully")
             except Exception as e:
                 logger.error(f"Error closing database pool: {e}")
             finally:
-                self.pool = None
+                self._pool = None
         else:
             logger.info("Active pool was closed or not found")
