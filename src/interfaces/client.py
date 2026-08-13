@@ -12,7 +12,7 @@ class IBaseClient(Protocol):
     _session: AsyncClient | None
     headers: dict[str, str] | None
     params: dict[str, Any] | None
-    
+
     @property
     def session(self):
         if self.session is None:
@@ -84,4 +84,9 @@ class IBaseClient(Protocol):
 
     async def __aenter__(self) -> Self: ...
 
-    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...

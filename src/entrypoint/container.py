@@ -48,19 +48,26 @@ class RouterProvider(Provider):
     @provide(scope=Scope.APP)
     def get_example_router(self, service: ExampleService) -> ExampleRouter:
         return ExampleRouter(example_service=service)
-    
+
     @provide(scope=Scope.APP)
     def get_health_router(self) -> HealthRouter:
         return HealthRouter()
 
     @provide(scope=Scope.APP)
-    def get_all_routers(self, example_router: ExampleRouter, health_router: HealthRouter) -> list[IBaseRouter]:
+    def get_all_routers(
+        self, example_router: ExampleRouter, health_router: HealthRouter
+    ) -> list[IBaseRouter]:
         return [example_router, health_router]
 
 
 def initialize_container() -> Container:
     return make_container(
-        ConfigProvider(), ClientProvider(), DatabaseProvider(), RepositoryProvider(), ServiceProvider(), RouterProvider()
+        ConfigProvider(),
+        ClientProvider(),
+        DatabaseProvider(),
+        RepositoryProvider(),
+        ServiceProvider(),
+        RouterProvider(),
     )
 
 

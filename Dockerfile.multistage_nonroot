@@ -23,7 +23,7 @@ ARG PROJECT_NAME=api-base
 
 # для примера
 RUN apk add --no-cache \
-    ca-certificates 
+    ca-certificates
 
 ENV PYTHONDONTWRITEBYTECODE=1
 
