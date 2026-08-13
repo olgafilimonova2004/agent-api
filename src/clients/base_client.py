@@ -1,4 +1,6 @@
-from typing import Any, Mapping, Self
+from collections.abc import Mapping
+from types import TracebackType
+from typing import Any, Self
 from urllib.parse import urljoin
 
 from httpx import AsyncClient, Response
@@ -21,7 +23,7 @@ class BaseClient(IBaseClient):
         self.token = token
         self.username = username
         self.password = password
-        self.session = session or AsyncClient(timeout=30.0)
+        self._session = session or AsyncClient(timeout=30.0)
         self.headers = headers or {}
         self.params = params or {}
 
@@ -152,8 +154,13 @@ class BaseClient(IBaseClient):
         if self.session:
             await self.session.aclose()
 
-    async def __aenter__(self) -> "BaseClient":
+    async def __aenter__(self) -> Self:
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         await self.close()

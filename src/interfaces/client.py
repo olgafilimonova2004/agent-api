@@ -1,4 +1,6 @@
-from typing import Any, Mapping, Protocol, runtime_checkable
+from collections.abc import Mapping
+from types import TracebackType
+from typing import Any, Protocol, Self, runtime_checkable
 
 from httpx import AsyncClient, Response
 
@@ -7,9 +9,15 @@ from httpx import AsyncClient, Response
 class IBaseClient(Protocol):
     base_url: str
     token: str | None
-    session: AsyncClient | None
+    _session: AsyncClient | None
     headers: dict[str, str] | None
     params: dict[str, Any] | None
+    
+    @property
+    def session(self):
+        if self.session is None:
+            raise RuntimeError("Client Session is closed")
+        return self.session
 
     @classmethod
     def create(cls, **kwargs: Any) -> "IBaseClient": ...
@@ -74,6 +82,6 @@ class IBaseClient(Protocol):
 
     async def close(self) -> None: ...
 
-    async def __aenter__(self) -> "IBaseClient": ...
+    async def __aenter__(self) -> Self: ...
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None: ...
+    async def __aexit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None: ...
