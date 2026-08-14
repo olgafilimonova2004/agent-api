@@ -21,3 +21,26 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+
+  # - repo: local
+  #   hooks:
+  #     - id: pip-audit
+  #       name: pip-audit
+  #       entry: uv run --with pip-audit pip-audit
+  #       language: system
+  #       pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: detect-private-key
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+
+ci:
+  # Leave pip-audit to only run locally and not in CI
+  # pre-commit.ci does not allow external network calls
+  skip: [pip-audit]

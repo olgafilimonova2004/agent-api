@@ -15,4 +15,5 @@ class ExampleService:
 
     @asyncpg_errors_decorator
     async def get_all(self) -> list[ExampleData]:
-        return await self.repo.get_all()
+        async with self.repo.db.tx() as tx:
+            return await self.repo.get_all_external_conn(conn=tx)

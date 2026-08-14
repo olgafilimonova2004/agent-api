@@ -21,7 +21,7 @@ class ExampleRepository:
             SELECT * FROM "ExampleTable"
         """)
         async with self.db.pool.acquire() as tx:
-            rows = await tx._con.fetch(query)
+            rows = await tx.fetch(query)
         return [ExampleData.model_validate(dict(row)) for row in rows]
 
     async def get_all_external_conn(
@@ -31,9 +31,6 @@ class ExampleRepository:
         query = dedent("""
             SELECT * FROM "ExampleTable"
         """)
-        if conn is not None:
-            rows = await conn.fetch(query)
-        else:
-            async with self.db.pool.acquire() as tx:
-                rows = await tx._con.fetch(query)
+        executor = conn if conn is not None else self.db
+        rows = await executor.fetch(query)
         return [ExampleData.model_validate(dict(row)) for row in rows]
