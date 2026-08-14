@@ -16,5 +16,9 @@ class ExampleRouter(IBaseRouter):
 
     def _register(self, router: APIRouter) -> None:
         @router.get("/")
-        async def get_all():
+        async def get_all_data():
             return await self.example_service.get_all()
+
+        @router.post("/query_other_service")
+        async def get_something_from_other_service(data: dict):
+            return await self.example_service.get_something_from_other_service(data)

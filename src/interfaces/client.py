@@ -3,11 +3,12 @@ from types import TracebackType
 from typing import Any, Protocol, Self, runtime_checkable
 
 from httpx import AsyncClient, Response
+from pydantic import AnyUrl
 
 
 @runtime_checkable
 class IBaseClient(Protocol):
-    base_url: str
+    base_url: AnyUrl
     token: str | None
     _session: AsyncClient | None
     headers: dict[str, str] | None
@@ -15,9 +16,9 @@ class IBaseClient(Protocol):
 
     @property
     def session(self):
-        if self.session is None:
+        if self._session is None:
             raise RuntimeError("Client Session is closed")
-        return self.session
+        return self._session
 
     @classmethod
     def create(cls, **kwargs: Any) -> "IBaseClient": ...

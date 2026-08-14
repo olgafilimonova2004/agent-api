@@ -20,8 +20,8 @@ class ConfigProvider(Provider):
 
 class ClientProvider(Provider):
     @provide(scope=Scope.APP)
-    def get_base_client(self) -> BaseClient:
-        return BaseClient(base_url="yandex.ru")
+    def get_base_client(self, config: AppConfig) -> BaseClient:
+        return BaseClient(base_url=config.client.BASE_URL)
 
 
 class DatabaseProvider(Provider):

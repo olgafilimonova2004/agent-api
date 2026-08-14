@@ -4,6 +4,7 @@ from typing import Any, Self
 from urllib.parse import urljoin
 
 from httpx import AsyncClient, Response
+from pydantic import AnyUrl
 
 from src.interfaces.client import IBaseClient
 
@@ -11,7 +12,7 @@ from src.interfaces.client import IBaseClient
 class BaseClient(IBaseClient):
     def __init__(
         self,
-        base_url: str,
+        base_url: AnyUrl,
         token: str | None = None,
         username: str | None = None,
         password: str | None = None,
@@ -19,7 +20,7 @@ class BaseClient(IBaseClient):
         headers: dict[str, str] | None = None,
         params: dict[str, Any] | None = None,
     ):
-        self.base_url = base_url.rstrip("/")
+        self.base_url = base_url
         self.token = token
         self.username = username
         self.password = password

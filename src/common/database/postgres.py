@@ -19,7 +19,7 @@ class PostgresPool:
         async def create_pool() -> Pool:
             if not self._pool:
                 self._pool = await asyncpg.create_pool(
-                    dsn=self._config.DSN,
+                    dsn=str(self._config.DSN),
                     min_size=self._config.MIN_SIZE,
                     max_size=self._config.MAX_SIZE,
                 )

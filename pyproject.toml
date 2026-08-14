@@ -10,7 +10,6 @@ dependencies = [
     "fastapi>=0.137.2",
     "httpx>=0.28.1",
     "loguru>=0.7.3",
-    "mypy>=1.16.1",
     "orjson>=3.11.8",
     "pydantic-settings>=2.15.0",
     "pydantic>=2.12.5",
