@@ -1,155 +1,210 @@
-# API Gateway
+# API Base
 
-> Чистая архитектура для API Gateway на основе FastAPI.
+> Пример основы для новых HTTP API-сервисов на FastAPI.
 
-[![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.137%2B-009688.svg)](https://fastapi.tiangolo.com/)
 
-## Описание
+## Назначение
 
-Этот проект представляет собой API Gateway, построенный на основе принципов Clean Architecture. Архитектура обеспечивает разделение ответственности между слоями, что делает приложение тестируемым, масштабируемым и легко поддерживаемым.
+Репозиторий содержит минимальный рабочий каркас сервиса с разделением HTTP-слоя, бизнес-логики и доступа к данным. Его следует копировать и адаптировать под конкретный сервис, удаляя демонстрационные компоненты, которые не нужны проекту.
 
-## Архитектура
+В примере уже настроены:
 
-Проект следует принципам **Clean Architecture** (также известной как Layered Architecture) с четким разделением на слои:
+- FastAPI и Uvicorn;
+- DI-контейнер Dishka;
+- асинхронный пул PostgreSQL на AsyncPG;
+- базовый HTTP-клиент на HTTPX;
+- Pydantic Settings для конфигурации из окружения;
+- повторные попытки подключения через Tenacity;
+- преобразование основных ошибок AsyncPG в HTTP-ошибки;
+- Ruff, ty и pre-commit hooks;
+- сборка обычного и multi-stage/non-root Docker-образов.
 
-**Примечание:** Архитектура основана на принципах Clean Architecture, которая фокусируется на разделении слоев и независимости бизнес-логики от инфраструктуры. Это отличается от Domain-Driven Design (DDD), который дополнительно включает доменные сущности, value objects, агрегаты и bounded contexts.
+Это слоистый шаблон, вдохновлённый Clean Architecture, а не полная реализация DDD: доменные сущности, агрегаты, bounded contexts и миграции в него намеренно не включены.
 
+## Структура проекта
+
+```text
+api-base/
+├── main.py                         # Локальная точка запуска
+├── pyproject.toml                  # Метаданные, зависимости и console script
+├── uv.lock                         # Зафиксированные версии зависимостей (полностью управляется uv, не human-readable)
+├── Dockerfile                      # Основной образ
+├── Dockerfile.multistage_nonroot   # Multi-stage образ с кастомным пользователем с uid по аргументу
+├── docker-compose.yaml             # Приложение и PostgreSQL
+└── src/
+    ├── clients/
+    │   └── base_client.py          # Асинхронный HTTP-клиент
+    ├── common/
+    │   ├── database/postgres.py    # Пул соединений PostgreSQL
+    │   ├── decorators.py           # Retry policy, другие декораторы
+    │   ├── enums.py                # Метаданные роутеров, другие определения Enum
+    │   └── errors.py               # HTTP-ошибки и обработка ошибок БД или другие определения ошибок
+    ├── entrypoint/
+    │   ├── application.py          # FastAPI, middleware и lifespan
+    │   ├── bootstrap.py            # Сборка приложения
+    │   ├── container.py            # DI контейнер
+    │   └── main.py                 # ASGI app и console script
+    ├── interfaces/                 # Интерфейсы и абстракции
+    ├── models/
+    │   ├── config.py               # Конфигурация приложения
+    │   └── pydantic/example.py     # Модели данных
+    ├── repositories/               # Репозитории для работы с данными
+    ├── routers/                    # FastAPI роутеры
+    └── services/                   # Бизнес-логика
 ```
-API-Gateway/
-├── src/
-│   ├── application.py      # Основной класс приложения
-│   ├── bootstrap.py        # Инициализация зависимостей
-│   │
-│   ├── clients/            # HTTP клиенты для внешних сервисов
-│   │   └── base_client.py
-│   │
-│   ├── common/             # Общие компоненты
-│   │   ├── config.py       # Конфигурация приложения
-│   │   ├── container.py    # DI контейнер
-│   │   └── database/       # Работа с БД
-│   │       └── postgres.py
-│   │
-│   ├── interfaces/         # Интерфейсы и абстракции
-│   │   ├── client.py
-│   │   └── router.py
-│   │
-│   ├── models/             # Модели конфигурации
-│   │   └── config.py
-│   │
-│   ├── repositories/       # Репозитории для работы с данными
-│   │   └── example_repository.py
-│   │
-│   ├── routers/            # FastAPI роутеры
-│   │   └── default.py
-│   │
-│   └── services/           # Бизнес-логика
-│       └── example.py
-│
-├── main.py                 # Точка входа приложения
-├── dockerfile              # Docker образ
-├── docker-compose.yml      # Docker Compose конфигурация
-└── pyproject.toml          # Зависимости проекта
+
+Поток зависимостей для демонстрационного endpoint:
+
+```text
+HTTP request -> ExampleRouter -> ExampleService -> ExampleRepository -> PostgreSQL
 ```
+
+Объекты собираются в `src/entrypoint/container.py`. Подключение к PostgreSQL создаётся при старте приложения и закрывается в его lifespan, поэтому без доступной БД сервис не запустится.
+
+## Требования
+
+- Python 3.12+ (можно понижать версию до тех пор, пока uv lock сможет разрешать зависимости)
+- [uv](https://github.com/astral-sh/uv)
+- PostgreSQL (для работы с БД)
 
 ## Быстрый старт
 
-### Требования
-
-- Python 3.13+
-- [uv](https://github.com/astral-sh/uv) (рекомендуется) или pip
-- PostgreSQL (для работы с БД)
-
-### Установка
+### 1. Установка зависимостей
 
 ```bash
-git clone <repository-url>
-cd API-Gateway
-
-# Установите зависимости (с uv)
 uv sync
 ```
 
-### Настройка окружения
+### 2. Переменные окружения
 
-Создайте файл `.env` в корне проекта:
+Скопируйте `.env.example` в `.env` (или в `.env.docker` для docker mode) в корне проекта и настройте необходимые переменные
 
-```env
-DB_URL=postgres://postgres:postgres@localhost:5432/postgres
-```
+### 3. Запуск PostgreSQL
 
-### Запуск
+После создания `.env` можно запустить только БД из Compose:
 
 ```bash
-# С помощью uv
-uv run --env-file=.env main.py
+docker compose up -d db
 ```
 
-Приложение будет доступно по адресу: `http://localhost:8000`
+Либо используйте уже доступный экземпляр PostgreSQL и укажите его адрес в `POSTGRES_DSN`.
 
-### Docker
+### 4. Запуск приложения
 
 ```bash
-# Запуск с помощью Docker Compose
-docker-compose up --build
-
-# Или только приложение
-docker build -t api-gateway .
-docker run -p 8000:8000 --env-file=.env api-gateway
+uv run --env-file .env main.py
 ```
 
-## API Endpoints
+Сервис слушает `http://localhost:8000`. Интерактивная документация доступна по адресам:
 
-### Health Check
+- Swagger UI: `http://localhost:8000/docs`;
+- ReDoc: `http://localhost:8000/redoc`;
+- OpenAPI: `http://localhost:8000/openapi.json`.
 
-- `GET /default/ping` - Проверка доступности сервиса
-- `GET /default/ready` - Проверка готовности к работе
+## Запуск в Docker
 
-## Технологии
+Для контейнера приложения создайте `.env.docker`. Имя хоста PostgreSQL должно совпадать с именем Compose-сервиса `db`:
 
-- **FastAPI** - современный веб-фреймворк для создания API
-- **Pydantic** - валидация данных и конфигурации
-- **AsyncPG** - асинхронный драйвер PostgreSQL
-- **HTTPX** - асинхронный HTTP клиент для взаимодействия с внешними сервисами
-- **Loguru** - удобное логирование
-- **Uvicorn** - ASGI сервер для запуска приложения
+```dotenv
+POSTGRES_DSN=postgresql://local:local@db:5432/local
+POSTGRES_MIN_SIZE=1
+POSTGRES_MAX_SIZE=10
+POSTGRES_MAX_CONN_ATTEMPT=5
+```
 
-## Основные принципы
+Затем выполните:
 
-Проект следует принципам **Clean Architecture**:
+```bash
+docker compose up --build -d
+```
 
-- **Разделение ответственности** - каждый слой имеет четко определенную роль
-- **Независимость от фреймворков** - бизнес-логика не зависит от FastAPI
-- **Зависимость направлена внутрь** - внешние слои зависят от внутренних
-- **Тестируемость** - легко писать unit и интеграционные тесты
-- **Масштабируемость** - структура поддерживает рост проекта
-- **Типизация** - использование type hints для повышения надежности кода
+Для сборки отдельного образа:
 
-## Структура слоев
+```bash
+docker build -t api-base .
+docker run --rm -p 8000:8000 --env-file .env.docker api-base
+```
 
-### Слой приложения (Application)
-Управление жизненным циклом приложения, middleware, роутинг.
+При отдельном запуске контейнера значение `POSTGRES_DSN` должно указывать на БД, доступную из его Docker-сети; Compose-имя `db` работает только внутри сети Compose.
 
-### Слой сервисов (Services)
-Бизнес-логика приложения, оркестрация репозиториев и клиентов.
+## API
 
-### Слой репозиториев (Repositories)
-Абстракция для работы с данными, инкапсуляция логики доступа к БД.
+| Метод | Путь | Назначение |
+| --- | --- | --- |
+| `GET` | `/api/v1/ping` | Liveness-проверка, возвращает `"pong"` |
+| `GET` | `/api/v1/health` | Health-проверка, возвращает `{"status": "ok"}` |
+| `GET` | `/api/v1/` | Демонстрационное получение записей из `ExampleTable` |
 
-### Слой клиентов (Clients)
-Взаимодействие с внешними HTTP API и микросервисами.
+Health-маршруты становятся доступны только после успешного старта приложения, включая создание пула БД.
 
-### Инфраструктурный слой (Common)
-Конфигурация, подключение к БД, общие утилиты.
+Демонстрационный endpoint ожидает существующую таблицу PostgreSQL:
+
+```sql
+CREATE TABLE "ExampleTable" (
+    id uuid PRIMARY KEY,
+    example_data varchar NOT NULL
+);
+```
+
+Миграции в шаблон не входят. Добавьте выбранный инструмент миграций в производном проекте либо удалите `ExampleRepository` и демонстрационный маршрут.
+
+## Как адаптировать шаблон
+
+1. Измените имя и описание пакета в `pyproject.toml`, а также console script `api-base`.
+2. Синхронно переименуйте сервис и образ в Docker-конфигурации.
+3. Определите конфигурацию сервиса в `src/models/config.py`.
+4. Замените демонстрационные model, repository, service и router своими реализациями.
+5. Зарегистрируйте новые зависимости и роутеры в `src/entrypoint/container.py`.
+6. Обновите префиксы и теги в `src/common/enums.py`.
+7. Настройте CORS в `src/entrypoint/application.py`: значение `*` предназначено только для основы и локальной разработки.
+8. Добавьте миграции, тесты, наблюдаемость и CI/CD в соответствии с требованиями сервиса.
+9. Пересоздайте lock-файл командой `uv lock` после изменения зависимостей.
 
 ## Разработка
 
-### Форматирование кода
+### Проверки качества
 
-Проект использует:
-- **Ruff** - для линтинга и форматирования
-- **MyPy** - для проверки типов
+Конфигурация pre-commit запускает:
 
-### Тестирование
+- `ruff-check` с автоисправлением;
+- `ruff-format`;
+- `ty` для проверки типов;
+- стандартные проверки текстовых и YAML-файлов;
+- `detect-private-key` и `gitleaks`.
 
-Проект настроен для использования **pytest** с поддержкой асинхронных тестов.
+Установка Git hooks и ручной запуск всех проверок:
+
+```bash
+uvx pre-commit install
+uvx pre-commit run --all-files
+```
+
+Отдельный запуск линтера, форматтера и проверки типов:
+
+```bash
+uvx ruff check .
+uvx ruff format --check .
+uvx ty check
+```
+
+### Тесты
+
+`pytest` и `pytest-asyncio` доступны в окружении проекта, но готовых тестов в шаблоне пока нет. После добавления каталога `tests/` запускайте набор командой:
+
+```bash
+uv run pytest
+```
+
+## Технологии
+
+- FastAPI и Uvicorn — HTTP API и ASGI-сервер;
+- Dishka — dependency injection;
+- Pydantic и pydantic-settings — DTO и конфигурация;
+- AsyncPG — асинхронная работа с PostgreSQL;
+- HTTPX — исходящие HTTP-запросы;
+- Tenacity — retry policy;
+- Loguru — логирование;
+- uv — управление зависимостями и запуск команд;
+- Ruff и ty — форматирование, линтинг и статическая проверка типов.
