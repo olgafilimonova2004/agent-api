@@ -1,5 +1,3 @@
-from textwrap import dedent
-
 from asyncpg.connection import Connection
 
 from src.common.database.postgres import PostgresPool
