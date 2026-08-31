@@ -21,14 +21,3 @@ class ExampleRepository:
         executor = conn if conn is not None else self.db
         rows = await executor.fetch(query)
         return [ExampleData.model_validate(dict(row)) for row in rows]
-
-    async def get_all_external_conn(
-        self,
-        conn: Connection | None = None,
-    ) -> list[ExampleData]:
-        query = """
-            SELECT * FROM "ExampleTable"
-        """
-        executor = conn if conn is not None else self.db
-        rows = await executor.fetch(query)
-        return [ExampleData.model_validate(dict(row)) for row in rows]
