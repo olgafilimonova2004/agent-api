@@ -1,0 +1,39 @@
+{
+  "incident_id": "a727c08c-49b0-4342-a49c-b9a89f355197",
+  "user_id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+  "maxapi_id": 161444738,
+  "user": {
+    "id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+    "name": "Иван Иванович",
+    "role": "МО",
+    "organization": "ООО Ромашка",
+    "post": "Разработчик",
+    "phone": "tel:+7-999-999-99-99",
+    "maxapi_id": 161444738
+  },
+  "checklist_id": "1a730cfa-64f8-4eaa-8fa7-26095d8e0b60",
+  "checklist_type": "technical",
+  "checklist_title": "Технические вопросы",
+  "component": "Инфраструктура",
+  "answers": [
+    {
+      "key": "description",
+      "title": "Введите описание",
+      "is_required": true,
+      "value": "Мой технический вопрос"
+    },
+    {
+      "key": "contour",
+      "title": "**Контур**",
+      "is_required": true,
+      "value": "ОПК"
+    },
+    {
+      "key": "software_version",
+      "title": "**Версия ПО**",
+      "is_required": false,
+      "value": "33"
+    }
+  ],
+  "is_ready": true
+}

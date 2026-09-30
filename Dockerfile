@@ -22,4 +22,4 @@ RUN --mount=type=cache,target=/opt/uv-cache \
     uv sync --no-dev --locked --no-editable
 
 ENV PATH="/app/.venv/bin:$PATH"
-ENTRYPOINT ["api-base"]
+ENTRYPOINT ["checklist-validator"]

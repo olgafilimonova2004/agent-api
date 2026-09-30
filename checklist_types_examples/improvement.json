@@ -1,0 +1,51 @@
+{
+  "incident_id": "c0f6c7d7-c64a-426b-8a7d-fcf154fe9949",
+  "user_id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+  "maxapi_id": 161444738,
+  "user": {
+    "id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+    "name": "Иван Иванович",
+    "role": "МО",
+    "organization": "ООО Ромашка",
+    "post": "Разработчик",
+    "phone": "tel:+7-999-999-99-99",
+    "maxapi_id": 161444738
+  },
+  "checklist_id": "b30abd9f-abc7-470a-9c44-85b7ca8abe88",
+  "checklist_type": "improvement",
+  "checklist_title": "Предложение по улучшению",
+  "component": "Функционал",
+  "answers": [
+    {
+      "key": "summary",
+      "title": "Описание улучшения",
+      "is_required": true,
+      "value": "Моё описание улучшения"
+    },
+    {
+      "key": "contour",
+      "title": "**Контур**",
+      "is_required": true,
+      "value": "ОПК"
+    },
+    {
+      "key": "proposal",
+      "title": "Введите предложение по улучшению (обязательное поле)",
+      "is_required": true,
+      "value": "Моё предложение по улучшению"
+    },
+    {
+      "key": "role",
+      "title": "**Роль**",
+      "is_required": false,
+      "value": "ВП"
+    },
+    {
+      "key": "process",
+      "title": "**Процесс**",
+      "is_required": false,
+      "value": "3: Подготовка Заключения ВП"
+    }
+  ],
+  "is_ready": true
+}

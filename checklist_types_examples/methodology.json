@@ -1,0 +1,75 @@
+{
+  "incident_id": "9a83b012-000d-49a7-8bb6-d12ffa932cb8",
+  "user_id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+  "maxapi_id": 161444738,
+  "user": {
+    "id": "917989de-d4ab-4082-ae3f-c32f7cbe18a5",
+    "name": "Иван Иванович",
+    "role": "МО",
+    "organization": "ООО Ромашка",
+    "post": "Разработчик",
+    "phone": "tel:+7-999-999-99-99",
+    "maxapi_id": 161444738
+  },
+  "checklist_id": "ea3c0113-a65f-4bf7-8eb3-36e042e2b6a2",
+  "checklist_type": "methodological",
+  "checklist_title": "Методологич. и функц. вопросы",
+  "component": "Функционал",
+  "answers": [
+    {
+      "key": "question",
+      "title": " **Введите методологический или функциональный вопрос** (обязательное поле)",
+      "is_required": true,
+      "value": "Мой метод. вопрос"
+    },
+    {
+      "key": "contour",
+      "title": "**Контур**",
+      "is_required": true,
+      "value": "ОПК"
+    },
+    {
+      "key": "software_version",
+      "title": "**Версия ПО**",
+      "is_required": false,
+      "value": "1.0"
+    },
+    {
+      "key": "model_version",
+      "title": "**Версия модели**",
+      "is_required": false,
+      "value": "2"
+    },
+    {
+      "key": "role",
+      "title": "**Роль**",
+      "is_required": false,
+      "value": "ОПК"
+    },
+    {
+      "key": "process",
+      "title": "**Процесс**",
+      "is_required": false,
+      "value": "2: Создание предложения ГИ"
+    },
+    {
+      "key": "procedure",
+      "title": "**Процедура**",
+      "is_required": false,
+      "value": "ПФЦ"
+    },
+    {
+      "key": "product_type",
+      "title": "**Вид продукции**",
+      "is_required": false,
+      "value": "НИР (ОКР)"
+    },
+    {
+      "key": "pricing_method",
+      "title": "**Метод определения цены**",
+      "is_required": false,
+      "value": "Биржевых индикаторов"
+    }
+  ],
+  "is_ready": true
+}

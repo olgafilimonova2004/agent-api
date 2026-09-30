@@ -3,10 +3,9 @@ from contextlib import asynccontextmanager
 
 from dishka import Container
 from fastapi import FastAPI
-from loguru import logger
 from starlette.middleware.cors import CORSMiddleware
 
-from src.common.database.postgres import PostgresPool
+from src.clients.qwen import LMClient
 from src.entrypoint.container import setup_di
 from src.interfaces.router import IBaseRouter
 from src.models.config import AppConfig
@@ -41,13 +40,11 @@ class Application:
     def start_app(self) -> FastAPI:
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-            db = self.container.get(PostgresPool)
+            client = self.container.get(LMClient)
             try:
-                await db.create_pool()
                 yield
             finally:
-                logger.warning("Ending ")
-                await db.close_pool()
+                await client.close()
 
         app = FastAPI(lifespan=lifespan)
 
