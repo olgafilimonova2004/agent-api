@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from src.clients.qwen import LMError
+from src.clients.lm_client import LMError
 from src.common.enums import RoutersMetainfo
 from src.interfaces.router import IBaseRouter
 from src.models.pydantic.checklist import UserChecklist

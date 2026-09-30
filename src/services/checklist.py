@@ -1,4 +1,4 @@
-from src.clients.qwen import LMClient
+from src.clients.lm_client import LMClient
 from src.models.pydantic.checklist import UserChecklist
 
 

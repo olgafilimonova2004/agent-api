@@ -2,7 +2,7 @@ from dishka import Container, Provider, Scope, make_container, provide
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 
-from src.clients.qwen import LMClient
+from src.clients.lm_client import LMClient
 from src.interfaces.router import IBaseRouter
 from src.models.config import AppConfig
 from src.routers.checklist import ChecklistRouter
@@ -17,7 +17,7 @@ class AppProvider(Provider):
 
     @provide(scope=Scope.APP)
     def client(self, config: AppConfig) -> LMClient:
-        return LMClient(config.qwen)
+        return LMClient(config.lm)
 
     @provide(scope=Scope.APP)
     def service(self, client: LMClient) -> ChecklistService:

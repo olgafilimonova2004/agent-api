@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class LMConfig(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="QWEN_")
+    model_config = SettingsConfigDict(env_prefix="LM_")
 
     base_url: AnyHttpUrl
     model: str = Field(default="Qwen3.8-27B")
@@ -12,4 +12,4 @@ class LMConfig(BaseSettings):
 
 
 class AppConfig(BaseSettings):
-    qwen: LMConfig = Field(default_factory=LMConfig)
+    lm: LMConfig = Field(default_factory=LMConfig)

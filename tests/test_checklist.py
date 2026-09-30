@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from src.clients.qwen import LMClient, LMError
+from src.clients.lm_client import LMClient, LMError
 from src.models.config import LMConfig
 from src.models.pydantic.checklist import UserChecklist
 from src.services.checklist import ChecklistService
@@ -33,7 +33,7 @@ def client_for(content: str, status: int = 200) -> LMClient:
 
     session = httpx.AsyncClient(transport=httpx.MockTransport(handler))
     return LMClient(
-        LMConfig(base_url="http://qwen/v1", model="test-model"), session
+        LMConfig(base_url="http://lm/v1", model="test-model"), session
     )
 
 
@@ -72,12 +72,12 @@ async def test_invalid_model_response(content: str) -> None:
 
 
 @pytest.mark.asyncio
-async def test_qwen_timeout() -> None:
+async def test_lm_timeout() -> None:
     def timeout(request: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("timed out", request=request)
 
     session = httpx.AsyncClient(transport=httpx.MockTransport(timeout))
-    client = LMClient(LMConfig(base_url="http://qwen/v1"), session)
+    client = LMClient(LMConfig(base_url="http://lm/v1"), session)
     with pytest.raises(LMError):
         await client.validate(checklist())
     await client.close()
@@ -85,7 +85,7 @@ async def test_qwen_timeout() -> None:
 
 @pytest.mark.asyncio
 async def test_api(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("QWEN_BASE_URL", "http://qwen/v1")
+    monkeypatch.setenv("LM_BASE_URL", "http://lm/v1")
     monkeypatch.setattr(LMClient, "validate", fake_validate)
     from src.entrypoint.main import app
 
@@ -106,10 +106,10 @@ async def fake_validate(self: LMClient, data: UserChecklist) -> list[str]:
 
 @pytest.mark.asyncio
 async def test_api_errors(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("QWEN_BASE_URL", "http://qwen/v1")
+    monkeypatch.setenv("LM_BASE_URL", "http://lm/v1")
 
     async def failed_validate(self: LMClient, data: UserChecklist) -> list[str]:
-        raise LMError("Qwen unavailable")
+        raise LMError("LM unavailable")
 
     monkeypatch.setattr(LMClient, "validate", failed_validate)
     from src.entrypoint.main import app

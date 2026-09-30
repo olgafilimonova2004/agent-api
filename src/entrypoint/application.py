@@ -5,7 +5,7 @@ from dishka import Container
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from src.clients.qwen import LMClient
+from src.clients.lm_client import LMClient
 from src.entrypoint.container import setup_di
 from src.interfaces.router import IBaseRouter
 from src.models.config import AppConfig
