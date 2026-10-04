@@ -12,7 +12,7 @@ class ChecklistAnswer(BaseModel):
 
 
 class UserChecklist(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="ignore")
 
     incident_id: UUID
     user_id: UUID
