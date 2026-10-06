@@ -1,21 +1,22 @@
 from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from dishka import Container
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from src.clients.lm_client import LMClient
 from src.entrypoint.container import setup_di
-from src.interfaces.router import IBaseRouter
 from src.models.config import AppConfig
+from src.services.embedder import EmbedderService
+from src.services.vespa import VespaService
 
 
 class Application:
     def __init__(
         self,
         config: AppConfig,
-        routers: list[IBaseRouter],
+        routers: list[APIRouter],
         container: Container,
     ):
         self._config = config
@@ -31,20 +32,15 @@ class Application:
             allow_headers=["*"],
         )
         for router in self.routers:
-            app.include_router(
-                router.api_router,
-                prefix=router.base_prefix,
-                tags=router.tags,  # type: ignore
-            )
+            app.include_router(router)
 
     def start_app(self) -> FastAPI:
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-            client = self.container.get(LMClient)
-            try:
+            async with AsyncExitStack() as stack:
+                for client_type in (LMClient, EmbedderService, VespaService):
+                    stack.push_async_callback(self.container.get(client_type).close)
                 yield
-            finally:
-                await client.close()
 
         app = FastAPI(lifespan=lifespan)
 

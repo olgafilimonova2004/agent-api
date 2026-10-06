@@ -35,7 +35,7 @@ class LMClient:
                         "Короткие значения допустимы для версий, ролей и других справочных полей. "
                         "Пустые необязательные поля пропускай; пустые обязательные включай. "
                         "Ответь только JSON-массивом строк с key, без markdown и пояснений."
-                        "Пример: [\"description\", \"contour\"]"
+                        'Пример: ["description", "contour"]'
                     ),
                 },
                 {
@@ -56,9 +56,7 @@ class LMClient:
             content = response.json()["choices"][0]["message"]["content"]
             result = json.loads(content)
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
-            raise LMError(
-                "LM request failed or returned an invalid response"
-            ) from exc
+            raise LMError("LM request failed or returned an invalid response") from exc
         if not isinstance(result, list) or any(
             not isinstance(key, str) for key in result
         ):

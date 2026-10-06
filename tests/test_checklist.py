@@ -32,9 +32,7 @@ def client_for(content: str, status: int = 200) -> LMClient:
         )
 
     session = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    return LMClient(
-        LMConfig(base_url="http://lm/v1", model="test-model"), session
-    )
+    return LMClient(LMConfig(base_url="http://lm/v1", model="test-model"), session)
 
 
 @pytest.mark.asyncio
@@ -96,7 +94,10 @@ async def test_api(monkeypatch: pytest.MonkeyPatch) -> None:
             data = json.loads((EXAMPLES / f"{name}.json").read_text())
             response = await api.post("/api/v1/checklists/validate", json=data)
             assert response.status_code == 200
-            assert response.json() == [data["answers"][0]["key"]]
+            assert response.json() == {
+                "invalid_fields": [data["answers"][0]["key"]],
+                "search": None,
+            }
         assert (await api.get("/api/v1/health")).json() == {"status": "ok"}
 
 

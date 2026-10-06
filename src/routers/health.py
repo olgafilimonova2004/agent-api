@@ -3,7 +3,6 @@ import logging
 from fastapi import APIRouter
 
 from src.common.enums import RoutersMetainfo
-from src.interfaces.router import IBaseRouter
 
 
 class HealthCheckFilter(logging.Filter):
@@ -14,10 +13,12 @@ class HealthCheckFilter(logging.Filter):
         return all(path not in message for path in self.EXCLUDED_PATHS)
 
 
-class HealthRouter(IBaseRouter):
+class HealthRouter:
     def __init__(self):
-        self._tags = RoutersMetainfo.HEALTH_TAGS.value
-        self._base_prefix = RoutersMetainfo.DEFAULT_PREFIX.value
+        tags = RoutersMetainfo.HEALTH_TAGS.value
+        prefix = RoutersMetainfo.DEFAULT_PREFIX.value
+        self.api_router = APIRouter(prefix=prefix, tags=list(tags))
+        self._register(self.api_router)
 
     def _register(self, router: APIRouter) -> None:
         logging.getLogger("uvicorn.access").addFilter(HealthCheckFilter())
