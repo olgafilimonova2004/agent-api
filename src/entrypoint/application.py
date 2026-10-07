@@ -5,7 +5,7 @@ from dishka import Container
 from fastapi import APIRouter, FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from src.clients.lm_client import LMClient
+from src.services.llm import LLMService
 from src.entrypoint.container import setup_di
 from src.models.config import AppConfig
 from src.services.embedder import EmbedderService
@@ -38,8 +38,8 @@ class Application:
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             async with AsyncExitStack() as stack:
-                for client_type in (LMClient, EmbedderService, VespaService):
-                    stack.push_async_callback(self.container.get(client_type).close)
+                for service_type in (LLMCService, EmbedderService, VespaService):
+                    stack.push_async_callback(self.container.get(service_type).close)
                 yield
 
         app = FastAPI(lifespan=lifespan)

@@ -7,7 +7,7 @@ import pytest
 from dishka import make_container
 from fastapi import APIRouter
 
-from src.clients.lm_client import LMClient
+from src.clients.llm import LLMService, LLMError
 from src.common.errors import SearchError
 from src.entrypoint.application import Application
 from src.entrypoint.container import AppProvider
@@ -286,7 +286,7 @@ async def test_confluence_failure_does_not_start_jira():
 @pytest.mark.asyncio
 async def test_api_and_cleanup(monkeypatch):
     monkeypatch.setenv("LM_BASE_URL", "http://lm/v1")
-    monkeypatch.setattr(LMClient, "validate", AsyncMock(return_value=[]))
+    monkeypatch.setattr(LLMService, "validate", AsyncMock(return_value=[]))
     monkeypatch.setattr(EmbedderService, "embed", AsyncMock(return_value=[0.1] * 2048))
     monkeypatch.setattr(VespaService, "search_confluence", AsyncMock(return_value=None))
     monkeypatch.setattr(VespaService, "search_jira", AsyncMock(return_value=None))
@@ -322,7 +322,7 @@ async def test_api_and_cleanup(monkeypatch):
             assert (
                 await api.post(f"/api/v1/{endpoint}", json=payload())
             ).status_code == 502
-    for cls in (LMClient, EmbedderService, VespaService):
+    for cls in (LLMService, EmbedderService, VespaService):
         assert container.get(cls).session.is_closed
 
 

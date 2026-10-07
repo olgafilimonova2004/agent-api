@@ -1,9 +1,9 @@
-from src.clients.lm_client import LMClient
+from src.clients.llm import LLMService
 from src.models.pydantic.checklist import UserChecklist
 
 
 class ChecklistService:
-    def __init__(self, client: LMClient):
+    def __init__(self, client: LLMService):
         self.client = client
 
     async def validate(self, checklist: UserChecklist) -> list[str]:

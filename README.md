@@ -6,7 +6,6 @@ HTTP-сервис проверяет заполненный чеклист и и
 
 - `src/models/pydantic/checklist.py` — входная Pydantic-модель чеклиста и полей.
 - `src/models/config.py` — настройки языковой модели из переменных окружения.
-- `src/clients/lm_client.py` — HTTP-запрос к `/v1/chat/completions` и проверка ответа модели.
 - `src/services/checklist.py` — правила для обязательных и необязательных полей, объединение результата в порядке `answers`.
 - `src/routers/checklist.py` — HTTP-маршрут проверки.
 - `src/entrypoint/` — сборка FastAPI, зависимостей и закрытие HTTP-клиента.

@@ -4,7 +4,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from src.clients.lm_client import LMClient, LMError
+from src.clients.llm import LLMService, LLMError
 from src.models.config import LMConfig
 from src.models.pydantic.checklist import UserChecklist
 from src.services.checklist import ChecklistService
@@ -16,7 +16,7 @@ def checklist(name: str = "error") -> UserChecklist:
     return UserChecklist.model_validate_json((EXAMPLES / f"{name}.json").read_text())
 
 
-def client_for(content: str, status: int = 200) -> LMClient:
+def client_for(content: str, status: int = 200) -> LLMService:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.url.path == "/v1/chat/completions"
         body = json.loads(request.content)
@@ -32,7 +32,7 @@ def client_for(content: str, status: int = 200) -> LMClient:
         )
 
     session = httpx.AsyncClient(transport=httpx.MockTransport(handler))
-    return LMClient(LMConfig(base_url="http://lm/v1", model="test-model"), session)
+    return LLMService(LMConfig(base_url="http://lm/v1", model="test-model"), session)
 
 
 @pytest.mark.asyncio
@@ -75,8 +75,8 @@ async def test_lm_timeout() -> None:
         raise httpx.ReadTimeout("timed out", request=request)
 
     session = httpx.AsyncClient(transport=httpx.MockTransport(timeout))
-    client = LMClient(LMConfig(base_url="http://lm/v1"), session)
-    with pytest.raises(LMError):
+    client = LLMService(LLMConfig(base_url="http://lm/v1"), session)
+    with pytest.raises(LLMError):
         await client.validate(checklist())
     await client.close()
 
@@ -84,7 +84,7 @@ async def test_lm_timeout() -> None:
 @pytest.mark.asyncio
 async def test_api(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LM_BASE_URL", "http://lm/v1")
-    monkeypatch.setattr(LMClient, "validate", fake_validate)
+    monkeypatch.setattr(LLMService, "validate", fake_validate)
     from src.entrypoint.main import app
 
     async with httpx.AsyncClient(
@@ -101,7 +101,7 @@ async def test_api(monkeypatch: pytest.MonkeyPatch) -> None:
         assert (await api.get("/api/v1/health")).json() == {"status": "ok"}
 
 
-async def fake_validate(self: LMClient, data: UserChecklist) -> list[str]:
+async def fake_validate(self: LLMService, data: UserChecklist) -> list[str]:
     return [data.answers[0].key]
 
 
@@ -109,10 +109,10 @@ async def fake_validate(self: LMClient, data: UserChecklist) -> list[str]:
 async def test_api_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("LM_BASE_URL", "http://lm/v1")
 
-    async def failed_validate(self: LMClient, data: UserChecklist) -> list[str]:
-        raise LMError("LM unavailable")
+    async def failed_validate(self: LLMService, data: UserChecklist) -> list[str]:
+        raise LLMError("LM unavailable")
 
-    monkeypatch.setattr(LMClient, "validate", failed_validate)
+    monkeypatch.setattr(LLMService, "validate", failed_validate)
     from src.entrypoint.main import app
 
     async with httpx.AsyncClient(

@@ -6,11 +6,11 @@ from src.models.config import LMConfig
 from src.models.pydantic.checklist import UserChecklist
 
 
-class LMError(Exception):
+class LLMError(Exception):
     pass
 
 
-class LMClient:
+class LLMService:
     def __init__(self, config: LMConfig, session: httpx.AsyncClient | None = None):
         self.config = config
         self.session = session or httpx.AsyncClient(timeout=config.timeout_seconds)
@@ -29,9 +29,9 @@ class LMClient:
                     "role": "system",
                     "content": (
                         "Ты проверяешь заполненный чеклист на русском языке. "
-                        "Для каждого ответа сопоставь key и title со значением value. "
-                        "Верни ключи ответов, которые бессмысленны, не соответствуют полю, "
-                        "содержат шаблонный текст или недостаточно конкретны для содержательного поля. "
+                        "Для каждого ответа сопоставь key и title со значением value по смыслу. "
+                        "Верни ключи ответов, которые бессмысленны, не соответствуют полю "
+                        "или недостаточно конкретны для содержательного поля. "
                         "Короткие значения допустимы для версий, ролей и других справочных полей. "
                         "Пустые необязательные поля пропускай; пустые обязательные включай. "
                         "Ответь только JSON-массивом строк с key, без markdown и пояснений."
@@ -56,13 +56,13 @@ class LMClient:
             content = response.json()["choices"][0]["message"]["content"]
             result = json.loads(content)
         except (httpx.HTTPError, ValueError, KeyError, IndexError, TypeError) as exc:
-            raise LMError("LM request failed or returned an invalid response") from exc
+            raise LLMError("LM request failed or returned an invalid response") from exc
         if not isinstance(result, list) or any(
             not isinstance(key, str) for key in result
         ):
-            raise LMError("LM returned an invalid key list")
+            raise LLMError("LM returned an invalid key list")
         if not set(result).issubset({answer.key for answer in checklist.answers}):
-            raise LMError("LM returned unknown keys")
+            raise LLMError("LM returned unknown keys")
         return result
 
     async def close(self) -> None:

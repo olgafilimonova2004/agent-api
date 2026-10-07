@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from src.clients.lm_client import LMError
+from src.clients.llm import LLMError
 from src.common.enums import RoutersMetainfo
 from src.common.errors import SearchError
 from src.models.pydantic.checklist import UserChecklist
@@ -21,5 +21,5 @@ class ChecklistRouter:
         async def validate(checklist: UserChecklist) -> ChecklistValidationResponse:
             try:
                 return await self.service.validate(checklist)
-            except (LMError, SearchError) as exc:
+            except (LLMError, SearchError) as exc:
                 raise HTTPException(status_code=502, detail=str(exc)) from exc
